@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Die Bausteine der EU – digitales Puzzle</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#fff;--fg:#14264D;--card:#F7F9FD;--line:#7A8CB0;--slot:#fff;--muted:#555;--ev:#E6EEFA;--evb:#2F62B8;--va:#FFF4CC;--vat:#5A4300}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151f;--fg:#E6ECF8;--card:#1a2233;--line:#4d5f86;--slot:#151c2b;--muted:#aab4c8}}
+:root[data-theme="dark"]{--bg:#10151f;--fg:#E6ECF8;--card:#1a2233;--line:#4d5f86;--slot:#151c2b;--muted:#aab4c8}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Helvetica Neue",Arial,sans-serif;font-size:16px}
+header{background:#0B3D91;color:#fff;padding:18px 24px 14px;border-bottom:6px solid #F2B705;display:flex;justify-content:space-between;align-items:center;gap:16px}
+header h1{margin:0;font-size:28px}header p{margin:6px 0 0;color:#D5E2F7;font-size:15px;max-width:900px}
+.stars{width:70px;height:70px;flex:none}
+main{max-width:1250px;margin:0 auto;padding:16px 20px 40px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}
+.bar input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--slot);color:var(--fg);min-width:240px}
+button{font:inherit;font-weight:700;padding:8px 14px;border-radius:8px;border:0;background:#0B3D91;color:#fff;cursor:pointer}
+button.sec{background:transparent;color:var(--fg);border:1px solid var(--line)}
+h2{font-size:15px;color:var(--muted);margin:18px 0 6px;letter-spacing:.04em;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:1fr 4fr 2fr;gap:14px}
+.heads div{font-size:13px;font-weight:700;color:var(--muted);padding-left:4px}
+.col{display:flex;flex-direction:column;gap:10px;min-height:60px;padding:6px;border:2px dashed var(--line);border-radius:14px}
+.piece{border-radius:12px;padding:12px 14px;font-size:16px;line-height:1.35;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;border:2px solid}
+.piece.y{background:#0B3D91;border-color:#0B3D91;color:#fff;font-weight:700;font-size:26px;text-align:center;display:flex;align-items:center;justify-content:center}
+.piece.e{background:var(--ev);border-color:var(--evb);color:#14264D}
+.piece.v{background:var(--va);border-color:#F2B705;color:var(--vat);font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center}
+.piece.sel{outline:4px solid #F2B705;outline-offset:2px}
+.piece.drag{opacity:.35}
+.ghost{position:fixed;z-index:50;pointer-events:none;opacity:.92;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.block{margin-bottom:16px}
+.slot{min-height:140px;border:2px dashed var(--line);border-radius:14px;background:var(--slot);display:flex}
+.slot .piece{flex:1;cursor:grab}
+.slot.hot,.col.hot{background:var(--va)}
+.write{margin-top:8px;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px 14px}
+.write label{display:block;font-weight:700;font-size:14px;color:#2F62B8;margin-bottom:6px}
+.write textarea{width:100%;font:inherit;font-size:17px;line-height:1.6;min-height:110px;resize:vertical;border:0;border-radius:8px;padding:8px;background:var(--slot);color:var(--fg)}
+.hint{color:var(--muted);font-size:14px}
+@media (max-width:760px){.grid{grid-template-columns:1fr 2fr 1.3fr;gap:8px}.piece{font-size:14px;padding:8px}.piece.y{font-size:19px}.stars{display:none}}
+@media print{.tray,.bar button,.hint{display:none}.piece{cursor:auto}.write textarea{border:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header>
+<div><h1>Die Bausteine der EU</h1>
+<p>Zieht die Teile aus dem Puzzlefeld in die passenden Felder: erst das Jahr, dann das Ereignis, dann den Wert. Erläutert danach, wie das Ereignis den Wert fördert.</p></div>
+<svg class="stars" viewBox="-50 -50 100 100" aria-hidden="true" id="stars"></svg>
+</header>
+<main>
+<div class="bar">
+<input id="name" placeholder="Name:" aria-label="Name">
+<button id="print">Drucken / Als PDF speichern</button>
+<button class="sec" id="reset">Zurücksetzen</button>
+</div>
+<p class="hint">Teile ziehen und loslassen. Alternativ: Teil antippen und danach das Zielfeld antippen. Ein Teil zurück ins Puzzlefeld legen: ziehen oder antippen und das Puzzlefeld antippen.</p>
+
+<div class="tray">
+<h2>Puzzleteile</h2>
+<div class="grid heads"><div>JAHR</div><div>HISTORISCHES EREIGNIS</div><div>WERT</div></div>
+<div class="grid">
+<div class="col" data-type="y" id="col-y"></div>
+<div class="col" data-type="e" id="col-e"></div>
+<div class="col" data-type="v" id="col-v"></div>
+</div></div>
+
+<h2>Arbeitsblatt</h2>
+<div class="grid heads"><div>JAHR</div><div>HISTORISCHES EREIGNIS</div><div>WERT</div></div>
+<div id="sheet"></div>
+</main>
+<script>
+var D=[
+["1952","Die Gründerstaaten legen ihre Kohle- und Stahlindustrie zusammen und stellen sie unter eine gemeinsame Verwaltung. Kein Staat kann diese kriegswichtigen Rohstoffe mehr allein kontrollieren.","Frieden und Sicherheit"],
+["1958","Die Staaten vereinbaren in Zoll-, Handels-, Agrar- und Verkehrspolitik gemeinsame Regeln. Gleichzeitig wird Euratom für die gemeinsame Nutzung der Atomenergie gegründet.","Wohlstand"],
+["1967","Die drei bisherigen Gemeinschaften (EGKS, EWG, Euratom) erhalten eine gemeinsame Kommission und einen gemeinsamen Rat. Aus drei getrennten Organisationen wird eine Europäische Gemeinschaft.","Modernisierung der Institutionen, Wohlstand"],
+["1987","Die Staaten beschließen den Binnenmarkt. Waren, Personen, Dienstleistungen und Kapital sollen sich frei über die Grenzen bewegen können.","Wohlstand"],
+["1993","Aus der EG wird die Europäische Union. Das Europäische Parlament darf bei Gesetzen mitentscheiden, die Staaten arbeiten auch in Verteidigung sowie Justiz und Inneres zusammen, und die Einführung des Euro wird vorbereitet.","Schaffung einer politischen Union, Modernisierung der Institutionen, Sicherheit, Wohlstand"],
+["2009","Das Parlament wird weiter gestärkt, im Rat reichen häufiger Mehrheitsentscheidungen. Bürgerinnen und Bürger können eine Europäische Bürgerinitiative starten. Es gibt einen Präsidenten des Europäischen Rates und einen Hohen Vertreter für Außen- und Sicherheitspolitik.","Effizienz im Entscheidungsverfahren, Demokratisierung"]];
+var by={};D.forEach(function(d){by[d[0]]=d});
+var ORD={y:["1993","1952","2009","1967","1958","1987"],e:["1987","2009","1958","1952","1993","1967"],v:["2009","1987","1952","1958","1967","1993"]};
+var KEY="eu-puzzle-v1",st={slots:{},text:{},name:""};
+try{var s=JSON.parse(localStorage.getItem(KEY)||"null");if(s)st=s}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+
+// Sterne
+(function(){var g="";for(var i=0;i<12;i++){var a=i*Math.PI/6-Math.PI/2,x=34*Math.cos(a),y=34*Math.sin(a),p=[];
+for(var k=0;k<10;k++){var r=k%2?3.4:8,b=k*Math.PI/5-Math.PI/2;p.push((x+r*Math.cos(b)).toFixed(1)+","+(y+r*Math.sin(b)).toFixed(1))}
+g+='<polygon points="'+p.join(" ")+'" fill="#F2B705"/>'}document.getElementById("stars").innerHTML=g})();
+
+function mk(t,id){var d=by[id],p=document.createElement("div");p.className="piece "+t;p.dataset.t=t;p.dataset.id=id;
+p.textContent=t=="y"?id:t=="e"?d[1]:d[2];p.addEventListener("pointerdown",down);return p}
+var pieces={};
+["y","e","v"].forEach(function(t){ORD[t].forEach(function(id){var p=mk(t,id);pieces[t+id]=p;document.getElementById("col-"+t).appendChild(p)})});
+
+var sheet=document.getElementById("sheet");
+for(var r=0;r<6;r++){var b=document.createElement("div");b.className="block";
+b.innerHTML='<div class="grid">'+["y","e","v"].map(function(t){return '<div class="slot" data-type="'+t+'" data-i="'+r+t+'"></div>'}).join("")+
+'</div><div class="write"><label for="t'+r+'">Erläutere: Wie fördert das Ereignis diesen Wert?</label><textarea id="t'+r+'"></textarea></div>';
+sheet.appendChild(b);
+(function(r){var ta=b.querySelector("textarea");ta.value=st.text[r]||"";ta.addEventListener("input",function(){st.text[r]=ta.value;save()})})(r)}
+var nm=document.getElementById("name");nm.value=st.name||"";nm.addEventListener("input",function(){st.name=nm.value;save()});
+
+function home(p){document.getElementById("col-"+p.dataset.t).appendChild(p)}
+function place(p,target){
+ if(!target||target.dataset.type!==p.dataset.t)return;
+ if(target.classList.contains("slot")){var o=target.firstElementChild;if(o&&o!==p)home(o);target.appendChild(p)}else target.appendChild(p);
+ sync()}
+function sync(){st.slots={};document.querySelectorAll(".slot").forEach(function(s){var p=s.firstElementChild;if(p)st.slots[s.dataset.i]=p.dataset.t+p.dataset.id});save()}
+Object.keys(st.slots).forEach(function(i){var p=pieces[st.slots[i]],s=document.querySelector('.slot[data-i="'+i+'"]');if(p&&s&&!s.firstElementChild)s.appendChild(p)});
+
+var sel=null,drag=null;
+function clearSel(){if(sel)sel.classList.remove("sel");sel=null}
+function targetAt(x,y){var e=document.elementFromPoint(x,y);return e&&e.closest(".slot,.col")}
+function down(ev){if(ev.button>0)return;var p=ev.currentTarget;drag={p:p,x:ev.clientX,y:ev.clientY,moved:false,g:null,w:p.offsetWidth,h:p.offsetHeight};
+ p.setPointerCapture(ev.pointerId);p.addEventListener("pointermove",move);p.addEventListener("pointerup",up);p.addEventListener("pointercancel",up)}
+function move(ev){if(!drag)return;var dx=ev.clientX-drag.x,dy=ev.clientY-drag.y;
+ if(!drag.moved&&Math.hypot(dx,dy)>6){drag.moved=true;var g=drag.p.cloneNode(true);g.className+=" ghost";g.style.width=drag.w+"px";g.style.height=drag.h+"px";
+  document.body.appendChild(g);drag.g=g;drag.p.classList.add("drag")}
+ if(drag.moved){drag.g.style.left=(ev.clientX-drag.w/2)+"px";drag.g.style.top=(ev.clientY-drag.h/2)+"px";
+  document.querySelectorAll(".hot").forEach(function(h){h.classList.remove("hot")});var t=targetAt(ev.clientX,ev.clientY);if(t&&t.dataset.type===drag.p.dataset.t)t.classList.add("hot")}}
+function up(ev){var d=drag;if(!d)return;drag=null;var p=d.p;p.removeEventListener("pointermove",move);p.removeEventListener("pointerup",up);p.removeEventListener("pointercancel",up);
+ document.querySelectorAll(".hot").forEach(function(h){h.classList.remove("hot")});
+ if(d.moved){d.g.remove();p.classList.remove("drag");place(p,targetAt(ev.clientX,ev.clientY));clearSel()}
+ else{if(sel===p)clearSel();else{clearSel();sel=p;p.classList.add("sel")}}}
+document.addEventListener("click",function(ev){if(!sel)return;var t=ev.target.closest(".slot,.col");if(t&&!ev.target.closest(".piece")){place(sel,t);clearSel()}});
+
+document.getElementById("print").onclick=function(){window.print()};
+document.getElementById("reset").onclick=function(){if(!confirm("Alles zurücksetzen (Teile und Texte)?"))return;
+ Object.keys(pieces).forEach(function(k){home(pieces[k])});document.querySelectorAll("textarea").forEach(function(t){t.value=""});
+ st={slots:{},text:{},name:st.name};save()};
+</script>
+</body>
+</html>
